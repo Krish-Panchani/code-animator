@@ -24,3 +24,67 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ========== Dracula Dark (VS Code style) ========== */
+/* Preview & Editor when data-theme="dark" */
+[data-theme="dark"].code-preview .syntax-keyword,
+[data-theme="dark"].code-editor-wrapper .syntax-keyword { color: #ff79c6; }
+[data-theme="dark"].code-preview .syntax-type,
+[data-theme="dark"].code-editor-wrapper .syntax-type { color: #8be9fd; }
+[data-theme="dark"].code-preview .syntax-string,
+[data-theme="dark"].code-preview .syntax-template,
+[data-theme="dark"].code-editor-wrapper .syntax-string,
+[data-theme="dark"].code-editor-wrapper .syntax-template { color: #f1fa8c; }
+[data-theme="dark"].code-preview .syntax-comment,
+[data-theme="dark"].code-preview .syntax-block-comment,
+[data-theme="dark"].code-editor-wrapper .syntax-comment,
+[data-theme="dark"].code-editor-wrapper .syntax-block-comment { color: #6272a4; font-style: italic; }
+[data-theme="dark"].code-preview .syntax-number,
+[data-theme="dark"].code-editor-wrapper .syntax-number { color: #bd93f9; }
+[data-theme="dark"].code-preview .syntax-regex,
+[data-theme="dark"].code-editor-wrapper .syntax-regex { color: #ffb86c; }
+[data-theme="dark"].code-preview .syntax-operator,
+[data-theme="dark"].code-preview .syntax-punctuation,
+[data-theme="dark"].code-preview .syntax-default,
+[data-theme="dark"].code-editor-wrapper .syntax-operator,
+[data-theme="dark"].code-editor-wrapper .syntax-punctuation,
+[data-theme="dark"].code-editor-wrapper .syntax-default { color: #f8f8f2; }
+[data-theme="dark"].code-preview .syntax-identifier,
+[data-theme="dark"].code-editor-wrapper .syntax-identifier { color: #50fa7b; }
+
+/* ========== Dracula Light (high contrast on white) ========== */
+/* Preview & Editor when data-theme="light" - no light blue, all readable */
+[data-theme="light"].code-preview .syntax-keyword,
+[data-theme="light"].code-editor-wrapper .syntax-keyword { color: #b7367e; }
+[data-theme="light"].code-preview .syntax-type,
+[data-theme="light"].code-editor-wrapper .syntax-type { color: #0d7b8e; }
+[data-theme="light"].code-preview .syntax-string,
+[data-theme="light"].code-preview .syntax-template,
+[data-theme="light"].code-editor-wrapper .syntax-string,
+[data-theme="light"].code-editor-wrapper .syntax-template { color: #7d7a00; }
+[data-theme="light"].code-preview .syntax-comment,
+[data-theme="light"].code-preview .syntax-block-comment,
+[data-theme="light"].code-editor-wrapper .syntax-comment,
+[data-theme="light"].code-editor-wrapper .syntax-block-comment { color: #5a5d7a; font-style: italic; }
+[data-theme="light"].code-preview .syntax-number,
+[data-theme="light"].code-editor-wrapper .syntax-number { color: #6d2bbf; }
+[data-theme="light"].code-preview .syntax-regex,
+[data-theme="light"].code-editor-wrapper .syntax-regex { color: #c44a0a; }
+[data-theme="light"].code-preview .syntax-operator,
+[data-theme="light"].code-preview .syntax-punctuation,
+[data-theme="light"].code-preview .syntax-default,
+[data-theme="light"].code-editor-wrapper .syntax-operator,
+[data-theme="light"].code-editor-wrapper .syntax-punctuation,
+[data-theme="light"].code-editor-wrapper .syntax-default { color: #24292f; }
+[data-theme="light"].code-preview .syntax-identifier,
+[data-theme="light"].code-editor-wrapper .syntax-identifier { color: #2d7d3e; }
+
+/* Preview: fade-in line reveal animation */
+@keyframes fade-in-reveal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fade-in-reveal {
+  animation-name: fade-in-reveal;
+  animation-timing-function: ease-out;
+}
