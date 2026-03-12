@@ -13,6 +13,11 @@ export type TokenType =
   | "regex"
   | "operator"
   | "identifier"
+  | "variableDeclaration"
+  | "variableUsage"
+  | "parameter"
+  | "function"
+  | "property"
   | "punctuation"
   | "type"
   | "default";
@@ -43,6 +48,8 @@ const PUNCTUATION = new Set([
   ";", ",", ".", "(", ")", "[", "]", "{", "}", "?", ":", "=>",
 ]);
 
+const DECLARATION_KEYWORDS = new Set(["let", "const", "var"]);
+
 function isLetterOrUnderscore(ch: string): boolean {
   return /[a-zA-Z_]/.test(ch);
 }
@@ -60,9 +67,208 @@ function isWhitespace(ch: string): boolean {
 }
 
 /**
+ * First pass: collect variable names (let/const/var/for) and parameter names (function/arrow).
+ * Declaration site = purple; usages = white; parameters = orange (Dracula).
+ */
+function collectDeclaredVariables(source: string): {
+  declaredVariables: Set<string>;
+  parameters: Set<string>;
+} {
+  const declaredVariables = new Set<string>();
+  const parameters = new Set<string>();
+  const n = source.length;
+  let i = 0;
+
+  function skipWhitespace(): void {
+    while (i < n && isWhitespace(source[i])) i++;
+  }
+
+  function readIdentifier(): string {
+    if (i >= n || !isLetterOrUnderscore(source[i])) return "";
+    let value = "";
+    while (i < n && isIdentifierPart(source[i])) {
+      value += source[i];
+      i++;
+    }
+    return value;
+  }
+
+  function skipString(q: string): void {
+    if (source[i] !== q) return;
+    i++;
+    while (i < n) {
+      if (source[i] === "\\") {
+        i += 2;
+        continue;
+      }
+      if (source[i] === q) {
+        i++;
+        break;
+      }
+      i++;
+    }
+  }
+
+  function skipLineComment(): void {
+    if (source[i] === "/" && source[i + 1] === "/") {
+      i += 2;
+      while (i < n && source[i] !== "\n") i++;
+    }
+  }
+
+  function skipBlockComment(): void {
+    if (source[i] === "/" && source[i + 1] === "*") {
+      i += 2;
+      while (i < n - 1 && (source[i] !== "*" || source[i + 1] !== "/")) i++;
+      if (i < n - 1) i += 2;
+    }
+  }
+
+  function skipTemplate(): void {
+    if (source[i] !== "`") return;
+    i++;
+    while (i < n) {
+      if (source[i] === "\\") {
+        i += 2;
+        continue;
+      }
+      if (source[i] === "`") {
+        i++;
+        return;
+      }
+      if (source[i] === "$" && source[i + 1] === "{") {
+        i += 2;
+        let depth = 1;
+        while (i < n && depth > 0) {
+          const c = source[i];
+          if (c === "{" || c === "(" || c === "[") depth++;
+          else if (c === "}" || c === ")" || c === "]") depth--;
+          i++;
+        }
+        continue;
+      }
+      i++;
+    }
+  }
+
+  while (i < n) {
+    const ch = source[i];
+    if (ch === '"' || ch === "'") {
+      skipString(ch);
+      continue;
+    }
+    if (ch === "`") {
+      skipTemplate();
+      continue;
+    }
+    if (ch === "/" && source[i + 1] === "/") {
+      skipLineComment();
+      continue;
+    }
+    if (ch === "/" && source[i + 1] === "*") {
+      skipBlockComment();
+      continue;
+    }
+    if (isLetterOrUnderscore(ch)) {
+      const word = readIdentifier();
+      if (DECLARATION_KEYWORDS.has(word)) {
+        skipWhitespace();
+        // Collect identifiers until we hit = or ; or ( or newline
+        while (i < n) {
+          const c = source[i];
+          if (isWhitespace(c)) {
+            skipWhitespace();
+            continue;
+          }
+          if (c === "=" || c === ";" || c === "(" || c === "\n" || c === "{") break;
+          if (c === ",") {
+            i++;
+            skipWhitespace();
+            continue;
+          }
+          const id = readIdentifier();
+          if (id && !JS_KEYWORDS.has(id) && !TS_TYPE_KEYWORDS.has(id)) {
+            declaredVariables.add(id);
+          }
+          if (i >= n) break;
+          if (source[i] === ",") i++;
+          else break;
+        }
+        continue;
+      }
+      if (word === "function") {
+        skipWhitespace();
+        readIdentifier(); // function name – not added to declared (stays identifier/function)
+        skipWhitespace();
+        if (source[i] === "(") {
+          i++;
+          while (i < n && source[i] !== ")") {
+            skipWhitespace();
+            if (source[i] === ")") break;
+            if (source[i] === "," || source[i] === ".") {
+              i++;
+              continue;
+            }
+            const param = readIdentifier();
+            if (param && !JS_KEYWORDS.has(param) && !TS_TYPE_KEYWORDS.has(param)) {
+              parameters.add(param);
+            }
+            while (i < n && source[i] !== ")" && source[i] !== ",") i++;
+            if (source[i] === ",") i++;
+          }
+        }
+        continue;
+      }
+      if (word === "for") {
+        skipWhitespace();
+        if (source[i] === "(") {
+          i++;
+          skipWhitespace();
+          const inOrOf = readIdentifier();
+          if (inOrOf === "const" || inOrOf === "let" || inOrOf === "var") {
+            skipWhitespace();
+            const id = readIdentifier();
+            if (id) declaredVariables.add(id);
+          }
+        }
+        continue;
+      }
+      continue;
+    }
+    // Arrow function params: (id, id) =>
+    if (ch === "(") {
+      i++;
+      const ids: string[] = [];
+      while (i < n && source[i] !== ")") {
+        skipWhitespace();
+        if (source[i] === ")") break;
+        if (source[i] === "," || source[i] === "." || source[i] === "{" || source[i] === "[") {
+          i++;
+          continue;
+        }
+        const id = readIdentifier();
+        if (id && !JS_KEYWORDS.has(id) && !TS_TYPE_KEYWORDS.has(id)) ids.push(id);
+        while (i < n && source[i] !== ")" && source[i] !== ",") i++;
+        if (source[i] === ",") i++;
+      }
+      if (source[i] === ")") i++;
+      skipWhitespace();
+      if (source[i] === "=" && source[i + 1] === ">") {
+        ids.forEach((id) => parameters.add(id));
+      }
+      continue;
+    }
+    i++;
+  }
+
+  return { declaredVariables, parameters };
+}
+
+/**
  * Tokenize JS/TS source into an array of tokens for syntax highlighting.
  */
 export function tokenize(source: string): Token[] {
+  const { declaredVariables, parameters } = collectDeclaredVariables(source);
   const tokens: Token[] = [];
   let i = 0;
   const n = source.length;
@@ -136,6 +342,7 @@ export function tokenize(source: string): Token[] {
       continue;
     }
 
+    
     // Double-quoted string
     if (ch === '"') {
       let value = '"';
@@ -246,6 +453,13 @@ export function tokenize(source: string): Token[] {
       continue;
     }
 
+    // Division operator (when not parsed as regex above)
+    if (ch === "/") {
+      tokens.push({ type: "operator", value: "/", start, end: i + 1 });
+      i++;
+      continue;
+    }
+
     // Numbers (hex, binary, octal, decimal)
     if (isDigit(ch) || (ch === "." && isDigit(source[i + 1]))) {
       let value = "";
@@ -307,11 +521,33 @@ export function tokenize(source: string): Token[] {
         value += source[i];
         i++;
       }
-      const type = JS_KEYWORDS.has(value)
+      let type: TokenType = JS_KEYWORDS.has(value)
         ? "keyword"
         : TS_TYPE_KEYWORDS.has(value)
           ? "type"
           : "identifier";
+
+      if (type === "identifier") {
+        const afterDot = prevToken?.value === ".";
+        const atDeclaration =
+          prevToken?.type === "keyword" &&
+          (prevToken.value === "const" || prevToken.value === "let" || prevToken.value === "var");
+        let j = i;
+        while (j < n && isWhitespace(source[j])) j++;
+        const nextIsParen = source[j] === "(";
+
+        if (parameters.has(value)) {
+          type = "parameter";
+        } else if (declaredVariables.has(value)) {
+          type = atDeclaration ? "variableDeclaration" : "variableUsage";
+        } else if (afterDot) {
+          type = nextIsParen ? "function" : "property";
+        } else if (nextIsParen) {
+          type = "function";
+        }
+        // else stays "identifier" (e.g. console – purple in Dracula)
+      }
+
       tokens.push({ type, value, start, end: i });
       continue;
     }
@@ -319,6 +555,7 @@ export function tokenize(source: string): Token[] {
     // Multi-char operators / punctuation
     const two = source.slice(i, i + 2);
     if (
+      two === "?." ||
       two === "==" ||
       two === "===" ||
       two === "!=" ||

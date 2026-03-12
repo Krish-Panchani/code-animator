@@ -50,7 +50,17 @@ body {
 [data-theme="dark"].code-editor-wrapper .syntax-punctuation,
 [data-theme="dark"].code-editor-wrapper .syntax-default { color: #f8f8f2; }
 [data-theme="dark"].code-preview .syntax-identifier,
-[data-theme="dark"].code-editor-wrapper .syntax-identifier { color: #50fa7b; }
+[data-theme="dark"].code-editor-wrapper .syntax-identifier { color: #bd93f9; }
+[data-theme="dark"].code-preview .syntax-variableDeclaration,
+[data-theme="dark"].code-editor-wrapper .syntax-variableDeclaration { color: #bd93f9; }
+[data-theme="dark"].code-preview .syntax-variableUsage,
+[data-theme="dark"].code-editor-wrapper .syntax-variableUsage { color: #f8f8f2; }
+[data-theme="dark"].code-preview .syntax-parameter,
+[data-theme="dark"].code-editor-wrapper .syntax-parameter { color: #ffb86c; }
+[data-theme="dark"].code-preview .syntax-property,
+[data-theme="dark"].code-editor-wrapper .syntax-property { color: #f8f8f2; }
+[data-theme="dark"].code-preview .syntax-function,
+[data-theme="dark"].code-editor-wrapper .syntax-function { color: #50fa7b; }
 
 /* ========== Dracula Light (high contrast on white) ========== */
 /* Preview & Editor when data-theme="light" - no light blue, all readable */
@@ -77,7 +87,17 @@ body {
 [data-theme="light"].code-editor-wrapper .syntax-punctuation,
 [data-theme="light"].code-editor-wrapper .syntax-default { color: #24292f; }
 [data-theme="light"].code-preview .syntax-identifier,
-[data-theme="light"].code-editor-wrapper .syntax-identifier { color: #2d7d3e; }
+[data-theme="light"].code-editor-wrapper .syntax-identifier { color: #6d2bbf; }
+[data-theme="light"].code-preview .syntax-variableDeclaration,
+[data-theme="light"].code-editor-wrapper .syntax-variableDeclaration { color: #6d2bbf; }
+[data-theme="light"].code-preview .syntax-variableUsage,
+[data-theme="light"].code-editor-wrapper .syntax-variableUsage { color: #24292f; }
+[data-theme="light"].code-preview .syntax-parameter,
+[data-theme="light"].code-editor-wrapper .syntax-parameter { color: #c44a0a; }
+[data-theme="light"].code-preview .syntax-property,
+[data-theme="light"].code-editor-wrapper .syntax-property { color: #24292f; }
+[data-theme="light"].code-preview .syntax-function,
+[data-theme="light"].code-editor-wrapper .syntax-function { color: #2d7d3e; }
 
 /* Preview: fade-in line reveal animation */
 @keyframes fade-in-reveal {
